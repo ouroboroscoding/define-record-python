@@ -36,31 +36,30 @@ class Storage(Tree, abc.ABC):
 	"""
 
 	@abc.abstractmethod
-	def add(self, value: dict | list) -> str | list:
+	def add(self, value: dict) -> str | list:
 		"""Add
 
-		Adds one or more raw records to the storage system
+		Adds one raw record to the storage system
 
 		Arguments:
-			value (dict | dict[]): One or more dictionaries of fields to data
+			value (dict): A dictionary of fields to data
 
 		Returns:
-			The ID or IDs of the added records
+			The ID of the added record
 		"""
 		pass
 
 	@abc.abstractmethod
-	def create(self, value: dict | list = {}) -> Data | list:
+	def create(self, value: dict = {}) -> Data | list:
 		"""Create
 
-		Creates one or more new data objects associated with the Storage
-		instance
+		Creates a new data object associated with the Storage instance
 
 		Arguments:
-			value (dict | list): The initial values to set for the record(s)
+			value (dict): The initial values to set for the record
 
 		Returns:
-			Data | Data[]
+			Data
 		"""
 		pass
 
@@ -94,13 +93,13 @@ class Storage(Tree, abc.ABC):
 
 	@abc.abstractmethod
 	def fetch(self,
-		_id: str | list = None,
+		_id: str | list[str] = None,
 		filter: dict = None,
 		limit: int | Limit = None,
-		fields: list = None,
-		raw: bool | list = False,
+		fields: list[str] = None,
+		raw: bool | list[str] = False,
 		options: dict = None
-	) -> list | dict | Data:
+	) -> Data | list[Data] | dict | list[dict]:
 		"""Fetch
 
 		Gets one, many, or all records from the storage system associated with
@@ -133,7 +132,7 @@ class Storage(Tree, abc.ABC):
 		pass
 
 	@abc.abstractmethod
-	def remove(self, _id: str | list = None, filter: dict = None):
+	def remove(self, _id: str | list[str] = None, filter: dict = None):
 		"""Remove
 
 		Removes one or more records from storage by ID or filter
@@ -159,7 +158,10 @@ class Storage(Tree, abc.ABC):
 		pass
 
 	@classmethod
-	def revision_generate(cls, old: dict | list, new: dict | list) -> dict | None:
+	def revision_generate(cls,
+		old: dict | list,
+		new: dict | list
+	) -> dict | None:
 		"""Revision Generate
 
 		Generates the list of changes between two records

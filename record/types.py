@@ -15,8 +15,8 @@ __all__ = ['Limit']
 # Python imports
 from collections import namedtuple
 
-Limit = namedtuple('Limit', 'start max')
+Limit = namedtuple('Limit', 'max start')
 """Limit
 
-Used to denote the starting point, and max number, of records when fetching them
+Used to denote the max number, and starting point, of records when fetching them
 """

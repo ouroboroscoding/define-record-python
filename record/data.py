@@ -3,6 +3,7 @@
 
 Holds data associated with records as well as methods to store that data
 """
+from __future__ import annotations
 
 __author__		= "Chris Nasr"
 __copyright__	= "Ouroboros Coding Inc."
@@ -43,9 +44,6 @@ class Data(abc.ABC):
 		# Init the list of fields that have changed
 		self._changed = []
 
-	def __delattr__(self, __name: str) -> None:
-		return super().__delattr__(__name)
-
 	def __contains__(self, key):
 		"""Contains
 
@@ -77,7 +75,7 @@ class Data(abc.ABC):
 		except KeyError as e:
 			raise AttributeError(*e.args)
 
-	def __delitem__(self, key):
+	def __delitem__(self, key) -> None:
 		"""Del(ete) Item
 
 		Overrides python magic method __delitem__ for deleting a key from a dict
@@ -150,7 +148,7 @@ class Data(abc.ABC):
 		except KeyError as e:
 			raise AttributeError(*e.args)
 
-	def __setitem__(self, key, value):
+	def __setitem__(self, key, value) -> None:
 		"""Set Item
 
 		Overrides python magic method __setitem__ for setting a key in a dict
@@ -181,7 +179,7 @@ class Data(abc.ABC):
 			str(self._value)
 		)
 
-	def __str__(self):
+	def __str__(self) -> str:
 		"""String
 
 		Overrides python magic method __str__ to return a string representing
@@ -229,13 +227,13 @@ class Data(abc.ABC):
 			# Call the instances changed and return that
 			return self[field].changed()
 
-	def changes(self) -> list:
+	def changes(self) -> list[str]:
 		"""Changes
 
 		Returns the list of fields that have been changed
 
 		Returns:
-			list
+			str[]
 		"""
 		return list(self._changed.keys())
 
@@ -253,7 +251,7 @@ class Data(abc.ABC):
 		self._value = self._storage.clean(self._value)
 
 	@property
-	def errors(self) -> list:
+	def errors(self) -> list[list[str]]:
 		"""Errors
 
 		Read only property that returns the list of errors from the last failed
@@ -261,7 +259,7 @@ class Data(abc.ABC):
 		"""
 		return copy(self._errors)
 
-	def field_get(self, field, default=None):
+	def field_get(self, field: str, default = None):
 		"""Field Get
 
 		Returns a specific field, if it's not found, returns the default
@@ -270,7 +268,7 @@ class Data(abc.ABC):
 
 		Arguments:
 			field (str): The field to get
-			default (mixed): Returned if the field doesn't exist
+			default (any): Returned if the field doesn't exist
 
 		Returns:
 			any
@@ -283,7 +281,7 @@ class Data(abc.ABC):
 		# Return the field
 		return self._value[field]
 
-	def field_remove(self, field: str):
+	def field_remove(self, field: str) -> Data:
 		"""Field Remove
 
 		Deletes a specific field from the record value
@@ -318,7 +316,7 @@ class Data(abc.ABC):
 		# Return self for chaining
 		return self
 
-	def field_set(self, field, value):
+	def field_set(self, field: str, value: any) -> Data:
 		"""Field Set
 
 		Sets a specific field in a record
