@@ -21,7 +21,6 @@ from tools import combine
 
 # Local imports
 from .data import Data
-from .types import Limit
 
 class Storage(Tree, abc.ABC):
 	"""Storage
@@ -36,30 +35,18 @@ class Storage(Tree, abc.ABC):
 	"""
 
 	@abc.abstractmethod
-	def add(self, value: dict) -> str | list:
+	def add(self, value: dict, conflict: str, revision: dict = NOT_SET) -> str | list:
 		"""Add
 
 		Adds one raw record to the storage system
 
 		Arguments:
 			value (dict): A dictionary of fields to data
+			conflict (str): A string describing what to do in the case of a
+							conflict in adding the record
 
 		Returns:
 			The ID of the added record
-		"""
-		pass
-
-	@abc.abstractmethod
-	def create(self, value: dict = {}) -> Data | list:
-		"""Create
-
-		Creates a new data object associated with the Storage instance
-
-		Arguments:
-			value (dict): The initial values to set for the record
-
-		Returns:
-			Data
 		"""
 		pass
 
@@ -95,7 +82,7 @@ class Storage(Tree, abc.ABC):
 	def fetch(self,
 		_id: str | list[str] = None,
 		filter: dict = None,
-		limit: int | Limit = None,
+		limit: int | tuple | None = None,
 		fields: list[str] = None,
 		raw: bool | list[str] = False,
 		options: dict = None
@@ -120,6 +107,20 @@ class Storage(Tree, abc.ABC):
 		pass
 
 	@abc.abstractmethod
+	def insert(self, value: dict = {}) -> Data | list:
+		"""Insert
+
+		Creates a new data object associated with the Storage instance
+
+		Arguments:
+			value (dict): The initial values to set for the record
+
+		Returns:
+			Data
+		"""
+		pass
+
+	@abc.abstractmethod
 	def install(self) -> bool:
 		"""Install
 
@@ -132,17 +133,23 @@ class Storage(Tree, abc.ABC):
 		pass
 
 	@abc.abstractmethod
-	def remove(self, _id: str | list[str] = None, filter: dict = None):
+	def remove(self, _id: str | list[str] = None, filter: dict = None) -> int:
 		"""Remove
 
-		Removes one or more records from storage by ID or filter
+		Removes one or more records from storage by ID or filter, and returns
+		the count of records removed
 
 		Arguments:
-			"""
+			_id (str): The ID(s) to remove
+			filter (dict): Data to filter what gets deleted
+
+		Returns:
+			int
+		"""
 		pass
 
 	@abc.abstractmethod
-	def revision_add(cls, _id: str, changes: dict):
+	def revision_add(cls, _id: str, changes: dict) -> bool:
 		"""Revision Add
 
 		Adds data to the storage system associated with the record that
