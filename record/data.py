@@ -13,12 +13,19 @@ __created__		= "2023-03-26"
 # Limit imports
 __all__ = ['Data']
 
+# Ouroboros imports
+import undefined
+from tools import clone, merge
+
 # Python imports
 import abc
-from copy import copy, deepcopy
+from copy import copy
 
-# Pip imports
-from define import NOT_SET
+# Local imports
+import record
+
+# Constants
+VALUE_DELETED = {}
 
 class Data(abc.ABC):
 	"""Data
@@ -26,7 +33,7 @@ class Data(abc.ABC):
 	Represents record data
 	"""
 
-	def __init__(self, storage: callable, value: dict = {}):
+	def __init__(self, storage: record.Storage, value: dict = {}):
 		"""Constructor
 
 		Creates a new instance
@@ -35,20 +42,44 @@ class Data(abc.ABC):
 			storage (Storage): The storage class associated with the data
 		"""
 
+		# Init the module variables
+		self._errors = None
+		self._overwrite = False
+
 		# Set the storage class
 		self._storage = storage
 
 		# Set the initial value
 		self._value = value
 
-		# Init the list of fields that have changed
-		self._changed = []
+		# The record of the specific data that has changed
+		self._changes = None
+
+	def __call__(self, default = None):
+		"""Call
+
+		Returns the full value stored in the data or the default if there's \
+		nothing
+
+		Arguments:
+			default (any): Returned if the doesn't exist or is empty
+
+		Returns:
+			any
+		"""
+
+		# If there's no value
+		if self._value is None:
+			return default
+
+		# Return a copy of the data
+		return clone(self._value)
 
 	def __contains__(self, key):
 		"""Contains
 
-		Overrides python magic method __contains__ to check if a key exists in a
-		dictionary like object
+		Overrides python magic method __contains__ to check if a key exists in \
+		a dictionary like object
 
 		Arguments:
 			key (str): The key to check for
@@ -58,116 +89,10 @@ class Data(abc.ABC):
 		"""
 		return key in self._value
 
-	def __delattr__(self, name: str) -> None:
-		"""Del(ete) Attr(ibute)
-
-		Overrides python magic method __delattr__ for deleting an attribute from
-		an object like instance
-
-		Arguments:
-			name (str): The attribute to delete
-
-		Raises:
-			AttributeError
-		"""
-		try:
-			return self.field_remove(name)
-		except KeyError as e:
-			raise AttributeError(*e.args)
-
-	def __delitem__(self, key) -> None:
-		"""Del(ete) Item
-
-		Overrides python magic method __delitem__ for deleting a key from a dict
-		like instance
-
-		Arguments:
-			key (str): The key to delete
-
-		Raises:
-			KeyError
-		"""
-		self.field_remove(key)
-
-	def __getattr__(self, name: str) -> any:
-		"""Get Attr(ibute)
-
-		Overrides python magic method __getattr__ for getting an attribute from
-		object like instance
-
-		Arguments:
-			name (str): The attribute to return
-
-		Raises:
-			AttributeError
-
-		Returns:
-			any
-		"""
-		v = self.field_get(name, NOT_SET)
-		if v is NOT_SET:
-			raise AttributeError(name)
-		return self._value[name]
-
-	def __getitem__(self, key):
-		"""Get Item
-
-		Overrides python magic method __getitem__ for getting a key from a dict
-		like instance
-
-		Arguments:
-			key (str): The key to return
-
-		Raises:
-			KeyError
-
-		Returns:
-			any
-		"""
-		v = self.field_get(key, NOT_SET)
-		if v is NOT_SET:
-			raise KeyError(key)
-		return self._value[key]
-
-	def __setattr__(self, name: str, value: any) -> None:
-		"""Set Attr(ibute)
-
-		Overrides python magic method __setattr__ for setting an attribute in an
-		object like instance
-
-		Arguments:
-			name (str): The attribute to set
-			value (any): The value of the attribute
-
-		Raises:
-			AttributeError
-			ValueError
-		"""
-		try:
-			return self.field_set(name, value)
-		except KeyError as e:
-			raise AttributeError(*e.args)
-
-	def __setitem__(self, key, value) -> None:
-		"""Set Item
-
-		Overrides python magic method __setitem__ for setting a key in a dict
-		like instance
-
-		Arguments:
-			key (str): The key to set
-			value (any): The value of the key
-
-		Raises:
-			KeyError
-			ValueError
-		"""
-		return self.field_set(key, value)
-
 	def __repr__(self) -> str:
 		"""Represent
 
-		Overrides python magic method __repr__ to print a string that would
+		Overrides python magic method __repr__ to print a string that would \
 		compile as returning the instance
 
 		Returns:
@@ -182,7 +107,7 @@ class Data(abc.ABC):
 	def __str__(self) -> str:
 		"""String
 
-		Overrides python magic method __str__ to return a string representing
+		Overrides python magic method __str__ to return a string representing \
 		the data of the instance
 
 		Returns:
@@ -190,11 +115,17 @@ class Data(abc.ABC):
 		"""
 		return str(self._value)
 
-	@abc.abstractmethod
-	def add(self) -> str:
+	def add(self,
+		conflict: record.CONFLICT = 'error',
+		revision: dict = undefined
+	) -> str:
 		"""Add
 
 		Adds the record data to the storage system
+
+		Arguments:
+			conflict (CONFLICT): A string describing what to do in the case of \
+								a conflict in adding the record
 
 		Raises:
 			RecordDuplicate
@@ -202,40 +133,37 @@ class Data(abc.ABC):
 		Returns:
 			The ID of the new record
 		"""
-		pass
 
-	@abc.abstractmethod
-	def changed(self, field: str) -> bool:
+		# Add the record and store the ID
+		self._value['_id'] = self._storage.add(self._value, conflict, revision)
+
+		# Clear changes and other flags
+		self._changes = None
+		self._errors = None
+		self._overwrite = False
+
+		# Return the ID
+		return self._value['_id']
+
+	def changed(self) -> bool:
 		"""Changed
 
-		Returns whether a specific field has been changed
-
-		Arguments:
-			field (str): The field to check for changes
+		Returns whether the data has been changed at all
 
 		Returns:
-			True if the field has been changed
+			bool
 		"""
+		return self._changes and True or False
 
-		# If the field is in the changed
-		if field in self._changed:
-			return True
-
-		# If the field is a complex type
-		if self[field].class_name() != 'Node':
-
-			# Call the instances changed and return that
-			return self[field].changed()
-
-	def changes(self) -> list[str]:
+	def changes(self) -> dict | None:
 		"""Changes
 
-		Returns the list of fields that have been changed
+		Returns the specific data that has been changed
 
 		Returns:
-			str[]
+			dict | None
 		"""
-		return list(self._changed.keys())
+		return clone(self._changes)
 
 	def clean(self) -> None:
 		"""Clean
@@ -254,119 +182,11 @@ class Data(abc.ABC):
 	def errors(self) -> list[list[str]]:
 		"""Errors
 
-		Read only property that returns the list of errors from the last failed
-		valid call
+		Read only property that returns the list of errors from the last \
+		failed valid call
 		"""
 		return copy(self._errors)
 
-	def field_get(self, field: str, default = None):
-		"""Field Get
-
-		Returns a specific field, if it's not found, returns the default
-
-		Both __getattr__ and __getitem__ use this method to get the field
-
-		Arguments:
-			field (str): The field to get
-			default (any): Returned if the field doesn't exist
-
-		Returns:
-			any
-		"""
-
-		# If the field doesn't exist
-		if field not in self._value:
-			return default
-
-		# Return the field
-		return self._value[field]
-
-	def field_remove(self, field: str) -> Data:
-		"""Field Remove
-
-		Deletes a specific field from the record value
-
-		Both __delattr__ and __delitem__ use this method to remove the field
-
-		Arguments:
-			field (str): The field to remove
-
-		Raises:
-			KeyError
-			ValueError
-
-		Returns:
-			self for chaining
-		"""
-
-		# If the field is not valid for the record
-		if field not in self._storage:
-			raise KeyError(field)
-
-		# If the field doesn't exist in the data there's nothing to do
-		if field not in self._value:
-			return self
-
-		# Remove the field from the document
-		del self._value[field]
-
-		# Flag the field as being changed
-		self._changed[field] = True
-
-		# Return self for chaining
-		return self
-
-	def field_set(self, field: str, value: any) -> Data:
-		"""Field Set
-
-		Sets a specific field in a record
-
-		Both __setattr__ and __setitem__ use this method to set the field
-
-		Arguments:
-			field (str): The name of the field to set
-			value (any): The value to set the field to
-
-		Raises:
-			KeyError: field doesn't exist in the structure of the record
-			ValueError: value is not valid for the field
-
-		Returns:
-			self for chaining
-		"""
-
-		# If the field is not valid for the record
-		if field not in self._storage:
-			raise KeyError(field)
-
-		# If the field hasn't changed, do nothing
-		if field in self._value and value == self._value[field]:
-			return self
-
-		# If the value isn't valid for the field
-		if not self._storage[field].valid(value, [field]):
-			raise ValueError(self._storage[field].validation_failures)
-
-		# If we need to keep changes
-		if self._storage.changes:
-			if self._old_value is None:
-				self._old_value = deepcopy(self._value)
-
-		# If the value is None, store it as is
-		if value is None:
-			self._value[field] = None
-
-		# Else, store it after cleaning it
-		else:
-			self._value[field] = self._storage[field].clean(value)
-
-		# Mark the field as changed
-		self._changed[field] = True
-
-		# Return self for chaining
-		return self
-
-	@abc.abstractmethod
 	def remove(self) -> bool:
 		"""Remove
 
@@ -375,13 +195,19 @@ class Data(abc.ABC):
 		Returns:
 			True on success
 		"""
-		pass
+		self._storage.remove(
+			self._value['_id']
+		)
 
-	@abc.abstractmethod
-	def save(self) -> bool:
+	def save(self, revision: dict = None) -> bool:
 		"""Save
 
 		Saves the record data over an existing record by ID
+
+		Arguments:
+			revision (dict): Optional, a dict of additional data needed to \
+								add the revision record. Only needed for \
+								records that have the revisions flag on
 
 		Raises:
 			RecordDuplicate
@@ -389,9 +215,92 @@ class Data(abc.ABC):
 		Returns:
 			True on success
 		"""
-		pass
 
-	def valid(self, level = NOT_SET) -> bool:
+		# If we are replacing the entire record
+		if self._overwrite:
+
+			# Pass the current value to the storage's save method
+			result = self._storage.save(
+				self._value['_id'], self._value, True, revision
+			)
+
+		# Else, we are just updating
+		else:
+
+			# Pass the changes to the storage's save method
+			result = self._storage.save(
+				self._value['_id'], self._changes, False, revision
+			)
+
+		# If we were successful, clear all flags and changes
+		if result:
+			self._errors = None
+			self._changes = None
+			self._overwrite = False
+
+		# Return the result
+		return result
+
+	def set(self,
+		value: dict
+	) -> bool:
+		"""Set
+
+		Will completely wipe out the previous value and set the overwrite \
+		flag so that any save call will replace the existing record with the \
+		new one
+
+		Arguments:
+			value (dict): The data to merge with the existing value
+			overwrite (bool): Optional, if set to True, all existing data is \
+								replaced with the current data
+
+		Returns:
+			bool
+		"""
+
+		# Set the existing value with the new value
+		self._value = value
+
+		# Set the overwrite flag, and clear any existing changes
+		self._overwrite = True
+		self._changes = None
+
+	def update(self, value: dict) -> dict:
+		"""Update
+
+		Merges the passed value with the existing data and keeps track of the \
+		changes. Will honour any existing overwrite flag so that the merge is \
+		with the current value, not the ones originally fetched
+
+		Arguments:
+			value (dict): The values to merge over the existing values
+
+		Returns:
+			dict | None
+		"""
+
+		# Merges the new data with the existing and stores the changes
+		dChanges = merge(self._value, value, True)
+
+		# If we have changes
+		if dChanges:
+
+			# If we are not already overwriting
+			if not self._overwrite:
+
+				# If we have existing changes, merge the new ones onto them
+				if self._changes:
+					merge(self._changes, dChanges)
+
+				# Else, store the new changes as the changes
+				else:
+					self._changes = dChanges
+
+		# Return the changes from just this call
+		return dChanges
+
+	def valid(self) -> bool:
 		"""Valid
 
 		Returns if the currently set values are valid or not
@@ -403,19 +312,24 @@ class Data(abc.ABC):
 		# Clear the associated errors
 		self._errors = None
 
-		# Call the valid method on the storage system to check if the values we
-		#	have are ok. If they aren't, store the errors locally
-		if self._storage.valid(self._value) is False:
+		# If we are overwriting
+		if self._overwrite:
+
+			# Call the valid method on the storage system to check if the values
+			#	we have are ok
+			bRes = self._storage.valid(self._value)
+
+		# Else, we are just checking changes
+		else:
+
+			# Call the valid method, ignoring any missing nodes, on the storage
+			#	system to check if the changes we have are ok
+			bRes = self._storage.valid(self._changes, True)
+
+		# If the data isn't valid, store the errors locally and return False
+		if bRes is False:
 			self._errors = self._storage.validation_failures
 			return False
 
 		# Return OK
 		return True
-
-	@property
-	def value(self) -> dict:
-		"""Value
-
-		Read-only property that returns the current value
-		"""
-		return copy(self._value)

@@ -10,9 +10,10 @@ __email__		= "chris@ouroboroscoding.com"
 __created__		= "2023-03-21"
 
 # Limit imports
-__all__ = ['Data', 'exceptions', 'Storage']
+__all__ = ['Cache', 'CONFLICT', 'Data', 'exceptions', 'Storage']
 
 # Local modules
-from . import exceptions
-from .data import Data
-from .storage import Storage
+from record import exceptions
+from record.cache import Cache
+from record.data import Data
+from record.storage import CONFLICT, Storage

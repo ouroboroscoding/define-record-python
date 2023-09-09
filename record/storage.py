@@ -10,24 +10,28 @@ __email__		= "chris@ouroboroscoding.com"
 __created__		= "2023-03-21"
 
 # Limit imports
-__all__ = ['Storage']
+__all__ = ['CONFLICT', 'Storage']
+
+# Ouroboros imports
+from define import Tree
+import undefined
 
 # Python imports
 import abc
-
-# Pip imports
-from define import Tree, NOT_SET
-from tools import combine
+from typing import Literal
 
 # Local imports
-from .data import Data
+from record.data import Data
+
+# Types
+CONFLICT = Literal['error', 'ignore', 'replace']
 
 class Storage(Tree, abc.ABC):
 	"""Storage
 
 	Represents the top level definition of some sort of stored record
 
-	Extends define.Tree in order to add the ability to validate and clean up
+	Extends define.Tree in order to add the ability to validate and clean up \
 	data in the record
 
 	Extends:
@@ -35,15 +39,21 @@ class Storage(Tree, abc.ABC):
 	"""
 
 	@abc.abstractmethod
-	def add(self, value: dict, conflict: str, revision: dict = NOT_SET) -> str | list:
+	def add(self,
+		value: dict,
+		conflict: CONFLICT,
+		revision: dict = undefined
+	) -> str | list:
 		"""Add
 
 		Adds one raw record to the storage system
 
 		Arguments:
 			value (dict): A dictionary of fields to data
-			conflict (str): A string describing what to do in the case of a
-							conflict in adding the record
+			conflict (CONFLICT): A string describing what to do in the case of \
+								a conflict in adding the record
+			revision (dict): Optional, additional information to store with \
+								the revision record
 
 		Returns:
 			The ID of the added record
@@ -89,9 +99,10 @@ class Storage(Tree, abc.ABC):
 	) -> Data | list[Data] | dict | list[dict]:
 		"""Fetch
 
-		Gets one, many, or all records from the storage system associated with
-		the class instance through one or more checks against IDs, filters, and
-		limits. Passing no arguments at all will return every record available
+		Gets one, many, or all records from the storage system associated with \
+		the class instance through one or more checks against IDs, filters, \
+		and limits. Passing no arguments at all will return every record \
+		available
 
 		Arguments:
 			_id: (str | str[]): The ID or IDs used to get the records
@@ -124,7 +135,7 @@ class Storage(Tree, abc.ABC):
 	def install(self) -> bool:
 		"""Install
 
-		Installs or creates the location where the records will be stored and
+		Installs or creates the location where the records will be stored and \
 		retrieved from
 
 		Returns:
@@ -136,7 +147,7 @@ class Storage(Tree, abc.ABC):
 	def remove(self, _id: str | list[str] = None, filter: dict = None) -> int:
 		"""Remove
 
-		Removes one or more records from storage by ID or filter, and returns
+		Removes one or more records from storage by ID or filter, and returns \
 		the count of records removed
 
 		Arguments:
@@ -152,7 +163,7 @@ class Storage(Tree, abc.ABC):
 	def revision_add(cls, _id: str, changes: dict) -> bool:
 		"""Revision Add
 
-		Adds data to the storage system associated with the record that
+		Adds data to the storage system associated with the record that \
 		indicates the changes since the previous add/save
 
 		Arguments:
@@ -283,11 +294,33 @@ class Storage(Tree, abc.ABC):
 		return None
 
 	@abc.abstractmethod
+	def save(self,
+		value: dict,
+		replace: bool = False,
+		revision: dict | None = None
+	) -> bool:
+		"""Save
+
+		Takes existing data and updates it by ID
+
+		Arguments:
+			value (dict): A dictionary of fields to data
+			replace (bool): Optional, set to True to have the new value \
+								overwrite the entire record. Defaults to False
+			revision (dict): Optional, data needed to store a revision record. \
+								Is dependant on the 'revision' config value
+
+		Returns:
+			bool
+		"""
+		pass
+
+	@abc.abstractmethod
 	def uninstall(self) -> bool:
 		"""Uninstall
 
-		Uninstalls or deletes the location where the records will be stored and
-		retrieved from
+		Uninstalls or deletes the location where the records will be stored \
+		and retrieved from
 
 		Returns:
 			bool
