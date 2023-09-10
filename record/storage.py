@@ -41,8 +41,8 @@ class Storage(Tree, abc.ABC):
 	@abc.abstractmethod
 	def add(self,
 		value: dict,
-		conflict: CONFLICT,
-		revision: dict = undefined
+		conflict: CONFLICT = 'error',
+		revision_info: dict = undefined
 	) -> str | list:
 		"""Add
 
@@ -51,9 +51,9 @@ class Storage(Tree, abc.ABC):
 		Arguments:
 			value (dict): A dictionary of fields to data
 			conflict (CONFLICT): A string describing what to do in the case of \
-								a conflict in adding the record
-			revision (dict): Optional, additional information to store with \
-								the revision record
+				a conflict in adding the record
+			revision_info (dict): Optional, additional information to store \
+				with the revision record
 
 		Returns:
 			The ID of the added record
@@ -144,18 +144,24 @@ class Storage(Tree, abc.ABC):
 		pass
 
 	@abc.abstractmethod
-	def remove(self, _id: str | list[str] = None, filter: dict = None) -> int:
+	def remove(self,
+		_id: str | list[str] = undefined,
+		filter: dict = undefined,
+		revision_info = undefined
+	) -> int:
 		"""Remove
 
 		Removes one or more records from storage by ID or filter, and returns \
-		the count of records removed
+		the the record or records removed
 
 		Arguments:
-			_id (str): The ID(s) to remove
-			filter (dict): Data to filter what gets deleted
+			_id (str): Optional, the ID(s) to remove
+			filter (dict): Optional, data to filter what gets deleted
+			revision_info (dict): Optional, additional data needed to store a \
+				revision record. Is dependant on the 'revision' config value
 
 		Returns:
-			int
+			dict | dict[]
 		"""
 		pass
 
@@ -295,20 +301,26 @@ class Storage(Tree, abc.ABC):
 
 	@abc.abstractmethod
 	def save(self,
+		_id: str,
 		value: dict,
 		replace: bool = False,
-		revision: dict | None = None
+		revision_info: dict = undefined,
+		full: dict = undefined
 	) -> bool:
 		"""Save
 
 		Takes existing data and updates it by ID
 
 		Arguments:
+			_id (str): The ID of the record to save
 			value (dict): A dictionary of fields to data
 			replace (bool): Optional, set to True to have the new value \
-								overwrite the entire record. Defaults to False
-			revision (dict): Optional, data needed to store a revision record. \
-								Is dependant on the 'revision' config value
+				overwrite the entire record. Defaults to False
+			revision_info (dict): Optional, additional data needed to store a \
+				revision record. Is dependant on the 'revision' config value
+			full (dict): Optional, the full data, used for revisions and \
+				caching, saves processing cycles fetching data from the DB if \
+				we already have it
 
 		Returns:
 			bool

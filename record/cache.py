@@ -38,7 +38,7 @@ class Cache(abc.ABC):
 
 		Arguments:
 			implementation (str): the name of the implementation that will be \
-				 					added
+				added
 
 		Raises:
 			ValueError if the name has already been used
@@ -120,19 +120,18 @@ class Cache(abc.ABC):
 		pass
 
 	@abc.abstractmethod
-	def add_missing(self, _id: str, ttl = undefined) -> bool:
+	def add_missing(self, _id: str | List[str], ttl = undefined) -> bool:
 		"""Add Missing
 
-		Used to mark IDs as missing from the DB so that they are not \
-		constantly fetched over and over. Helpful against someone maliciously \
-		trying to overload the system
+		Used to mark one or more IDs as missing from the DB so that they are \
+		not constantly fetched over and over
 
 		Arguments:
-			_id (str): The ID of the record that is missing
+			_id (str | str[]): The ID(s) of the record that is missing
 			ttl (int): Optional, used to set the ttl for this record. By \
-						default the ttl used is the same as stored records
+				default the ttl used is the same as stored records
 
 		Returns:
-			bool
+			bool | bool[]
 		"""
 		pass

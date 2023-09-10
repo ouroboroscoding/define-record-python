@@ -125,7 +125,7 @@ class Data(abc.ABC):
 
 		Arguments:
 			conflict (CONFLICT): A string describing what to do in the case of \
-								a conflict in adding the record
+				a conflict in adding the record
 
 		Raises:
 			RecordDuplicate
@@ -199,15 +199,15 @@ class Data(abc.ABC):
 			self._value['_id']
 		)
 
-	def save(self, revision: dict = None) -> bool:
+	def save(self, revision_info: dict = None) -> bool:
 		"""Save
 
 		Saves the record data over an existing record by ID
 
 		Arguments:
-			revision (dict): Optional, a dict of additional data needed to \
-								add the revision record. Only needed for \
-								records that have the revisions flag on
+			revision_info (dict): Optional, a dict of additional data needed \
+				to add the revision record. Only needed for records that have \
+				the revisions flag on
 
 		Raises:
 			RecordDuplicate
@@ -221,7 +221,7 @@ class Data(abc.ABC):
 
 			# Pass the current value to the storage's save method
 			result = self._storage.save(
-				self._value['_id'], self._value, True, revision
+				self._value['_id'], self._value, True, revision_info
 			)
 
 		# Else, we are just updating
@@ -229,7 +229,7 @@ class Data(abc.ABC):
 
 			# Pass the changes to the storage's save method
 			result = self._storage.save(
-				self._value['_id'], self._changes, False, revision
+				self._value['_id'], self._changes, False, revision_info
 			)
 
 		# If we were successful, clear all flags and changes
@@ -253,7 +253,7 @@ class Data(abc.ABC):
 		Arguments:
 			value (dict): The data to merge with the existing value
 			overwrite (bool): Optional, if set to True, all existing data is \
-								replaced with the current data
+				replaced with the current data
 
 		Returns:
 			bool
