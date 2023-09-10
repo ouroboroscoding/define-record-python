@@ -135,7 +135,11 @@ class Data(abc.ABC):
 		"""
 
 		# Add the record and store the ID
-		self._value['_id'] = self._storage.add(self._value, conflict, revision)
+		self._value[self._storage._key] = self._storage.add(
+			self._value,
+			conflict,
+			revision
+		)
 
 		# Clear changes and other flags
 		self._changes = None
@@ -143,7 +147,7 @@ class Data(abc.ABC):
 		self._overwrite = False
 
 		# Return the ID
-		return self._value['_id']
+		return self._value[self._storage._key]
 
 	def changed(self) -> bool:
 		"""Changed
@@ -221,7 +225,10 @@ class Data(abc.ABC):
 
 			# Pass the current value to the storage's save method
 			result = self._storage.save(
-				self._value['_id'], self._value, True, revision_info
+				self._value[self._storage._key],
+				self._value,
+				True,
+				revision_info
 			)
 
 		# Else, we are just updating
@@ -229,7 +236,10 @@ class Data(abc.ABC):
 
 			# Pass the changes to the storage's save method
 			result = self._storage.save(
-				self._value['_id'], self._changes, False, revision_info
+				self._value[self._storage._key],
+				self._changes,
+				False,
+				revision_info
 			)
 
 		# If we were successful, clear all flags and changes

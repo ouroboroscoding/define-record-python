@@ -38,6 +38,35 @@ class Storage(Tree, abc.ABC):
 		define.Tree
 	"""
 
+	def __init__(self,
+		details: dict | str,
+		extend: dict | Literal[False] = undefined,
+		key_name: str = '_id'
+	):
+		"""Constructor
+
+		Initialises the instance
+
+		Arguments:
+			details (dict | str): Definition or filepath to load
+			extend (dict | False): Optional, a dictionary to extend the \
+				definition
+			key_name (str): Optional, the name of the primary key field, \
+				defaults to '_id'
+
+		Raises:
+			KeyError, ValueError
+
+		Returns
+			Storage
+		"""
+
+		# Call the parent constructor
+		super(Storage, self).__init__(details, extend)
+
+		# Store the key name
+		self._key: str = key_name
+
 	@abc.abstractmethod
 	def add(self,
 		value: dict,
