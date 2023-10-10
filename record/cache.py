@@ -75,8 +75,6 @@ class Cache(abc.ABC):
 			None | Cache
 		"""
 
-		print('record: generating "%s"' % conf['implementation'])
-
 		# Get the configuration
 		dConf = conf[conf['implementation']]
 
