@@ -15,7 +15,7 @@ __all__ = ['Data']
 
 # Ouroboros imports
 import undefined
-from tools import clone, merge
+from tools import clone, compare, merge
 
 # Python imports
 import abc
@@ -88,6 +88,46 @@ class Data(abc.ABC):
 			bool
 		"""
 		return key in self._value
+
+	def __getattr__(self, name: str) -> any:
+		"""Get Attribute
+
+		Implements Python magic method __getattr__ to give object notation \
+		access to the value. Returns a copy of the value, updating any data \
+		returned by accessing values in this way will not affect the instance \
+		or any saving
+
+		Arguments:
+			name (str): The value key to get
+
+		Raises:
+			AttributeError
+
+		Returns:
+			any
+		"""
+		try:
+			return copy(self._value[name])
+		except KeyError:
+			raise AttributeError(name, '%s not in Data' % name)
+
+	def __getitem__(self, name: str) -> any:
+		"""Get Item
+
+		Implements Python magic method __getitem__ to give dict access to the \
+		value. Returns a copy of the value, updating any data returned by \
+		accessing values in this way will not affect the instance or any saving
+
+		Arguments:
+			name (str): The value key to get
+
+		Raises:
+			AttributeError
+
+		Returns:
+			any
+		"""
+		return copy(self._value[name])
 
 	def __repr__(self) -> str:
 		"""Represent
@@ -191,16 +231,21 @@ class Data(abc.ABC):
 		"""
 		return copy(self._errors)
 
-	def remove(self) -> bool:
+	def remove(self, revision_info: dict = undefined) -> bool:
 		"""Remove
 
 		Removes the existing record data by it's ID
 
+		Arguments:
+			revision_info (dict): Optional, additional information to store \
+				with the revision record
+
 		Returns:
 			True on success
 		"""
-		self._storage.remove(
-			self._value['_id']
+		return self._storage.remove(
+			self._value['_id'],
+			revision_info = revision_info
 		)
 
 	def save(self, revision_info: dict = None) -> bool:
@@ -228,7 +273,8 @@ class Data(abc.ABC):
 				self._value[self._storage._key],
 				self._value,
 				True,
-				revision_info
+				revision_info,
+				self._value
 			)
 
 		# Else, we are just updating
@@ -239,7 +285,8 @@ class Data(abc.ABC):
 				self._value[self._storage._key],
 				self._changes,
 				False,
-				revision_info
+				revision_info,
+				self._value
 			)
 
 		# If we were successful, clear all flags and changes
@@ -253,7 +300,7 @@ class Data(abc.ABC):
 
 	def set(self,
 		value: dict
-	) -> bool:
+	):
 		"""Set
 
 		Will completely wipe out the previous value and set the overwrite \
@@ -264,13 +311,46 @@ class Data(abc.ABC):
 			value (dict): The data to merge with the existing value
 			overwrite (bool): Optional, if set to True, all existing data is \
 				replaced with the current data
-
-		Returns:
-			bool
 		"""
 
 		# Set the existing value with the new value
 		self._value = value
+
+		# Set the overwrite flag, and clear any existing changes
+		self._overwrite = True
+		self._changes = None
+
+	def __setitem__(self, key: str, value: any):
+		"""Set Item
+
+		Uses python magic method to set a fields value using dict notation. \
+		Setting values this way completely replaces them. To merge existing \
+		values, use the update() method
+
+		Arguments:
+			key (str): The key to set
+			value (any): The value to set
+		"""
+		self.__setattr__(key, value)
+
+	def __setattr__(self, name: str, value: any):
+		"""Set Attribute
+
+		Uses python magic method to set a fields value using attribute \
+		notation. Setting values this way completely replaces them. To merge \
+		existing values, use the update() method
+
+		Arguments:
+			name (str): The name of the field to set
+			value (any): The value to set the field to
+		"""
+
+		# If there's no difference, do nothing
+		if compare(self._value[name], value):
+			return
+
+		# Set the value
+		self._value[name] = value
 
 		# Set the overwrite flag, and clear any existing changes
 		self._overwrite = True
