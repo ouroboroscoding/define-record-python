@@ -29,50 +29,40 @@ class Cache(abc.ABC):
 	__implementations = {}
 	"""Classes used to create new cache instances"""
 
-	@classmethod
-	def register(cls, implementation: str) -> bool:
-		"""Register
+	@abc.abstractmethod
+	def add_missing(self, _id: str | List[str], ttl = undefined) -> bool:
+		"""Add Missing
 
-		Registers the class `cls` as a type that can be instantiated using the \
-		implementation name
+		Used to mark one or more IDs as missing from the DB so that they are \
+		not constantly fetched over and over
 
 		Arguments:
-			implementation (str): the name of the implementation that will be \
-				added
-
-		Raises:
-			ValueError if the name has already been used
+			_id (str | str[]): The ID(s) of the record that is missing
+			ttl (int): Optional, used to set the ttl for this record. By \
+				default the ttl used is the same as stored records
 
 		Returns:
-			None
+			bool | bool[]
 		"""
-
-		# If the name already exists
-		if implementation in cls.__implementations:
-			raise ValueError(implementation, 'already registered')
-
-		# Store the new constructor
-		cls.__implementations[implementation] = cls
+		pass
 
 	@classmethod
-	def generate(cls,
-		conf: dict
-	) -> None | 'Cache':
-		"""Generate
+	def factory(cls, conf: dict) -> Cache:
+		"""Factory
 
-		If the enabled flag is set, generates a Cache instance which will be \
-		able to fetch and store records by ID. If the flag is not enabled, \
-		then None is returned to indicate no caching
+		Create an instance of the Cache which will be able to fetch and store \
+		records by ID
 
 		Arguments:
-			conf (dict): The configuration for the cache, must contain the
+			conf (dict): The configuration for the cache, must contain the \
+				implementation config
 
 		Raises:
 			KeyError if configuration for the implementation is missing
 			ValueError if the implementation doesn't exist
 
 		Returns:
-			None | Cache
+			Cache
 		"""
 
 		# Get the configuration
@@ -102,6 +92,31 @@ class Cache(abc.ABC):
 		"""
 		pass
 
+	@classmethod
+	def register(cls, implementation: str) -> bool:
+		"""Register
+
+		Registers the class `cls` as a type that can be instantiated using the \
+		implementation name
+
+		Arguments:
+			implementation (str): the name of the implementation that will be \
+				added
+
+		Raises:
+			ValueError if the name has already been used
+
+		Returns:
+			None
+		"""
+
+		# If the name already exists
+		if implementation in cls.__implementations:
+			raise ValueError(implementation, 'already registered')
+
+		# Store the new constructor
+		cls.__implementations[implementation] = cls
+
 	@abc.abstractmethod
 	def store(self, _id: str, data: dict) -> bool:
 		"""Store
@@ -114,22 +129,5 @@ class Cache(abc.ABC):
 
 		Returns:
 			bool
-		"""
-		pass
-
-	@abc.abstractmethod
-	def add_missing(self, _id: str | List[str], ttl = undefined) -> bool:
-		"""Add Missing
-
-		Used to mark one or more IDs as missing from the DB so that they are \
-		not constantly fetched over and over
-
-		Arguments:
-			_id (str | str[]): The ID(s) of the record that is missing
-			ttl (int): Optional, used to set the ttl for this record. By \
-				default the ttl used is the same as stored records
-
-		Returns:
-			bool | bool[]
 		"""
 		pass

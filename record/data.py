@@ -331,26 +331,13 @@ class Data(abc.ABC):
 			key (str): The key to set
 			value (any): The value to set
 		"""
-		self.__setattr__(key, value)
-
-	def __setattr__(self, name: str, value: any):
-		"""Set Attribute
-
-		Uses python magic method to set a fields value using attribute \
-		notation. Setting values this way completely replaces them. To merge \
-		existing values, use the update() method
-
-		Arguments:
-			name (str): The name of the field to set
-			value (any): The value to set the field to
-		"""
 
 		# If there's no difference, do nothing
-		if compare(self._value[name], value):
+		if compare(self._value[key], value):
 			return
 
 		# Set the value
-		self._value[name] = value
+		self._value[key] = value
 
 		# Set the overwrite flag, and clear any existing changes
 		self._overwrite = True
