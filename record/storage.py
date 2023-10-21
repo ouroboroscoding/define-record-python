@@ -57,7 +57,7 @@ class Storage(Tree, abc.ABC):
 		Raises:
 			KeyError, ValueError
 
-		Returns
+		Returns:
 			Storage
 		"""
 

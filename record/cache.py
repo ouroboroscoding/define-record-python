@@ -75,17 +75,23 @@ class Cache(abc.ABC):
 			raise ValueError(conf['implementation'], 'not registered')
 
 	@abc.abstractmethod
-	def fetch(self, _id: str | List[str]) -> dict | List[dict]:
+	def fetch(self,
+		_id: str | List[str],
+		index = undefined
+	) -> None | False | dict | List[None, False, dict]:
 		"""Fetch
 
 		Fetches one or more records from the cache. If a record does not \
 		exist, None is returned, if the record has previously been marked as \
 		missing, False is returned, else the dict of the record is returned. \
-		In the case of fetching multiple IDs, a list is returned with the same \
-		possible types: False, None, or dict
+		An alternate index can be used to fetch the data, assuming the index \
+		is handled by the implementation. In the case of fetching multiple \
+		IDs, a list is returned with the same possible types: False, None, or \
+		dict
 
-		Arguments
+		Arguments:
 			_id (str | str[]): One or more IDs to fetch from the cache
+			index (str): An alternate index to use to fetch the record
 
 		Returns:
 			None | False | dict | List[None | False | dict]
@@ -118,14 +124,20 @@ class Cache(abc.ABC):
 		cls.__implementations[implementation] = cls
 
 	@abc.abstractmethod
-	def store(self, _id: str, data: dict) -> bool:
+	def store(self,
+		_id: str,
+		data: dict,
+		indexes = undefined
+	) -> bool:
 		"""Store
 
-		Stores the data under the given ID in the cache
+		Stores the data under the given ID in the cache. Also stores \
+		additional indexes if passed
 
-		Arguments
+		Arguments:
 			_id (str): The ID to store the data under
 			data (dict): The data to store under the ID
+			indexes (dict): Optional, the indexes to store alongside the data
 
 		Returns:
 			bool
