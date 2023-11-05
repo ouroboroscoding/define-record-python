@@ -15,7 +15,7 @@ import undefined
 
 # Python imports
 import abc
-from typing import List
+from typing import List, Union
 
 class Cache(abc.ABC):
 	"""Cache
@@ -65,21 +65,18 @@ class Cache(abc.ABC):
 			Cache
 		"""
 
-		# Get the configuration
-		dConf = conf[conf['implementation']]
-
 		# Create the instance by calling the implementation
 		try:
-			return cls.__implementations[conf['implementation']](dConf)
+			return cls.__implementations[conf['implementation']](conf)
 		except KeyError:
 			raise ValueError(conf['implementation'], 'not registered')
 
 	@abc.abstractmethod
-	def fetch(self,
-		_id: str | List[str],
+	def get(self,
+		_id: str | tuple | List[str] | List[tuple],
 		index = undefined
-	) -> None | False | dict | List[None, False, dict]:
-		"""Fetch
+	) -> None | False | dict | List[Union[None, False, dict]]:
+		"""Get
 
 		Fetches one or more records from the cache. If a record does not \
 		exist, None is returned, if the record has previously been marked as \
@@ -90,7 +87,8 @@ class Cache(abc.ABC):
 		dict
 
 		Arguments:
-			_id (str | str[]): One or more IDs to fetch from the cache
+			_id (str | str[] | tuple | tuple[]): One or more IDs to fetch from \
+				the cache
 			index (str): An alternate index to use to fetch the record
 
 		Returns:
@@ -124,20 +122,18 @@ class Cache(abc.ABC):
 		cls.__implementations[implementation] = cls
 
 	@abc.abstractmethod
-	def store(self,
+	def set(self,
 		_id: str,
-		data: dict,
-		indexes = undefined
+		data: dict
 	) -> bool:
 		"""Store
 
-		Stores the data under the given ID in the cache. Also stores \
-		additional indexes if passed
+		Stores the data under the given ID in the cache as well as any indexes \
+		associated with the record
 
 		Arguments:
 			_id (str): The ID to store the data under
 			data (dict): The data to store under the ID
-			indexes (dict): Optional, the indexes to store alongside the data
 
 		Returns:
 			bool

@@ -18,7 +18,7 @@ import undefined
 
 # Python imports
 import abc
-from typing import Literal
+from typing import List, Literal
 
 # Local imports
 from record.data import Data
@@ -118,27 +118,46 @@ class Storage(Tree, abc.ABC):
 		pass
 
 	@abc.abstractmethod
-	def fetch(self,
-		_id: str | list[str] = None,
-		filter: dict = None,
-		limit: int | tuple | None = None,
-		fields: list[str] = None,
-		raw: bool | list[str] = False,
+	def filter(self,
+		fields: dict,
+		raw: bool | List[str] = False,
 		options: dict = None
-	) -> Data | list[Data] | dict | list[dict]:
-		"""Fetch
+	) -> List[Data] | List[dict]:
+		"""Filter
 
-		Gets one, many, or all records from the storage system associated with \
-		the class instance through one or more checks against IDs, filters, \
-		and limits. Passing no arguments at all will return every record \
-		available
+		Gets records based on specific data fields
 
 		Arguments:
-			_id: (str | str[]): The ID or IDs used to get the records
-			filter (dict): Data to filter the count of records by
-			limit (int | Limit): The limit to set for the fetch
-			fields (str[]): A list of the fields to be returned for each record
-			raw (bool): If true, dicts are returned instead of Data instances
+			fields (dict): Field and values to filter the data by
+			raw (bool | str[]): Return raw data instead of Data instances
+			options (dict): Custom options processed by the storage system
+
+		Returns:
+			Data[] | dict[]
+		"""
+		pass
+
+	@abc.abstractmethod
+	def get(self,
+		_id: str | List[str] = undefined,
+		index = undefined,
+		raw = False,
+		options: dict = undefined
+	) -> Data | List[Data] | dict | List[dict]:
+		"""Get
+
+		Gets one, many, or all records from the storage system associated with \
+		the class instance through checks against IDs, either primary, no \
+		`index`, or secondary by passing the name to `index`. Passing no \
+		arguments at all will return every record. Setting raw to True, or a \
+		list of fields, will return a dict or dicts instead of Data objects
+
+		Arguments:
+			_id (str | str[] | tuple | tuple[]): The ID or IDs used to get the \
+				records. Don't set to get all records
+			index (str): The name of the index to use to fetch the data \
+				instead of the primary key
+			raw (bool | str[]): Return raw data instead of Data instances
 			options (dict): Custom options processed by the storage system
 
 		Returns:
