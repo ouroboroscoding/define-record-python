@@ -29,6 +29,53 @@ class Cache(abc.ABC):
 	__implementations = {}
 	"""Classes used to create new cache instances"""
 
+	def __init__(self, name: str, conf: dict):
+		"""Constructor
+
+		Creates and returns a new instance of the class
+
+		Arguments:
+			name (str): The unique name of the record instance
+			conf (dict): Configuration data from the Record instance
+
+		Returns:
+			Cache
+		"""
+
+		# Store the name
+		self._name = name
+
+		# Init the indexes
+		self._indexes = {}
+
+		# If there's any indexes
+		if 'indexes' in conf:
+
+			# If it's not a dict
+			if not isinstance(conf['indexes'], dict):
+				raise ValueError(
+					'conf.indexes',
+					'Cache config indexes must be dict'
+				)
+
+			# Go through each one
+			for sName, mValue in conf['indexes'].items():
+
+				# If it's a str, it's just one field
+				if isinstance(mValue, str):
+					self._indexes[sName] = [ mValue ]
+
+				# Else, if it's a list of fields
+				elif isinstance(mValue, list):
+					self._indexes[sName] = mValue
+
+				# Else, we got something invalid
+				else:
+					raise ValueError(
+						'conf.indexes.%s' % sName,
+						'Cache config indexes must be str or list'
+					)
+
 	@abc.abstractmethod
 	def add_missing(self, _id: str | List[str], ttl = undefined) -> bool:
 		"""Add Missing
@@ -47,13 +94,14 @@ class Cache(abc.ABC):
 		pass
 
 	@classmethod
-	def factory(cls, conf: dict) -> Cache:
+	def factory(cls, name: str, conf: dict) -> Cache:
 		"""Factory
 
 		Create an instance of the Cache which will be able to fetch and store \
 		records by ID
 
 		Arguments:
+			name (str): The name of the instance
 			conf (dict): The configuration for the cache, must contain the \
 				implementation config
 
@@ -67,7 +115,7 @@ class Cache(abc.ABC):
 
 		# Create the instance by calling the implementation
 		try:
-			return cls.__implementations[conf['implementation']](conf)
+			return cls.__implementations[conf['implementation']](name, conf)
 		except KeyError:
 			raise ValueError(conf['implementation'], 'not registered')
 
