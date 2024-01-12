@@ -18,3 +18,25 @@ class RecordDuplicate(Exception):
 		Exception
 	"""
 	pass
+
+class RecordServerException(Exception):
+	"""Record Server Exception
+
+	Raised when there's some issue reading or writing from the underlying data \
+	server
+
+	Extends:
+		Exception
+	"""
+	pass
+
+class RecordStorageException(Exception):
+	"""Record Storage Exception
+
+	Raises when there is some faulure in setting up or configuring the Storage \
+	instance
+
+	Extends:
+		Exception
+	"""
+	pass
